@@ -1,0 +1,25 @@
+﻿<Window x:Class="Projekat.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Projekat.ViewModels"
+        Title="Student Performance Analytics" Height="600" Width="900">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="#FFB580" Height="50">
+            <Button Content="Studenti" Margin="5" Padding="10,5"
+                    Command="{Binding ShowStudentsCommand}"/>
+            <Button Content="Predmeti" Margin="5" Padding="10,5"
+                    Command="{Binding ShowPredmetiCommand}"/>
+            <Button Content="Ispiti" Margin="5" Padding="10,5"
+                    Command="{Binding ShowIspitiCommand}"/>
+            <Button Content="Statistika" Margin="5" Padding="10,5"
+                    Command="{Binding ShowStatistikaCommand}"/>
+        </StackPanel>
+
+        <ContentControl Content="{Binding CurrentViewModel}"/>
+    </DockPanel>
+</Window>
