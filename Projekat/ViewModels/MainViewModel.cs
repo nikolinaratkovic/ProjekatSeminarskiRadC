@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 
 namespace Projekat.ViewModels
 {
@@ -25,10 +20,10 @@ namespace Projekat.ViewModels
 
         public MainViewModel()
         {
-            //ShowStudentsCommand = new RelayCommand(_ => CurrentViewModel = new StudentsViewModel());
-            //ShowPredmetiCommand = new RelayCommand(_ => CurrentViewModel = new PredmetiViewModel());
+            CurrentViewModel = new StudentViewModel(); // default view
 
-            //CurrentViewModel = new StudentsViewModel(); // default
+            ShowStudentsCommand = new RelayCommand(_ => CurrentViewModel = new StudentViewModel());
+            ShowPredmetiCommand = new RelayCommand(_ => CurrentViewModel = new PredmetViewModel());
         }
-    }   
+    }
 }
