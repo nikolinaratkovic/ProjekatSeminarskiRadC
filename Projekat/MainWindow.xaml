@@ -18,12 +18,16 @@
         <DataTemplate DataType="{x:Type vm:PredmetViewModel}">
             <views:PredmetView/>
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:IspitViewModel}">
+            <views:IspitView/>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
-        <!-- Top menu -->
         <Border DockPanel.Dock="Top" Background="#5DADE2" Height="60" Padding="10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+
                 <Button Content="Studenti" Margin="0,0,10,0"
                         Command="{Binding ShowStudentsCommand}"
                         Background="#85C1E9" Foreground="White" FontWeight="Bold"
@@ -49,10 +53,23 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
+
+                <Button Content="Ispiti" Margin="0,0,10,0"
+                        Command="{Binding ShowIspitiCommand}"
+                        Background="#85C1E9" Foreground="White" FontWeight="Bold"
+                        BorderThickness="0" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
             </StackPanel>
         </Border>
 
-        <!-- Glavni sadržaj -->
         <Border Margin="20" Background="White" CornerRadius="15" Padding="10">
             <ContentControl Content="{Binding CurrentViewModel}"/>
         </Border>

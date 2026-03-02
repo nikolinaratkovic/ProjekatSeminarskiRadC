@@ -17,6 +17,7 @@ namespace Projekat.ViewModels
 
         public ICommand ShowStudentsCommand { get; }
         public ICommand ShowPredmetiCommand { get; }
+        public ICommand ShowIspititCommand { get; }
 
         public MainViewModel()
         {
@@ -24,6 +25,7 @@ namespace Projekat.ViewModels
 
             ShowStudentsCommand = new RelayCommand(_ => CurrentViewModel = new StudentViewModel());
             ShowPredmetiCommand = new RelayCommand(_ => CurrentViewModel = new PredmetViewModel());
+            ShowIspititCommand = new RelayCommand(_ => CurrentViewModel = new IspitViewModel());
         }
     }
 }
