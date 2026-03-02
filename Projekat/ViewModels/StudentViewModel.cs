@@ -1,8 +1,12 @@
-﻿using Projekat.Models;
+﻿using Projekat.Data;
+using Projekat.Models;
+using Projekat.Services;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
+using Microsoft.EntityFrameworkCore;
 
 namespace Projekat.ViewModels
 {
@@ -14,6 +18,8 @@ namespace Projekat.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        private readonly StudentService _studentService;
 
         public ObservableCollection<Student> Students { get; set; } = new ObservableCollection<Student>();
 
@@ -134,62 +140,124 @@ namespace Projekat.ViewModels
 
         public StudentViewModel()
         {
-            // Test podaci
-            Students.Add(new Student
-            {
-                StudentID = 1,
-                Ime = "Nikolina",
-                Prezime = "Ratkovic",
-                BrojIndeksa = "2026/001",
-                GodinaStudija = 3
-            });
+            
+            var context = new ApplicationDbContext(
+                new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<ApplicationDbContext>()
+                    .UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;")
+                    .Options
+            );
+            _studentService = new StudentService(context);
 
-            Students.Add(new Student
-            {
-                StudentID = 2,
-                Ime = "Marko",
-                Prezime = "Petrovic",
-                BrojIndeksa = "2026/002",
-                GodinaStudija = 2
-            });
+            UcitajStudente();
 
-            AddCommand = new RelayCommand(o => AddStudent(), o => CanSave());
-            EditCommand = new RelayCommand(o => EditStudent(), o => SelectedStudent != null && CanSave());
-            DeleteCommand = new RelayCommand(o => DeleteStudent(), o => SelectedStudent != null);
+            AddCommand = new RelayCommand(o => DodajStudenta(), o => CanSave());
+            EditCommand = new RelayCommand(o => AzurirajStudenta(), o => SelectedStudent != null && CanSave());
+            DeleteCommand = new RelayCommand(o => ObrisiStudenta(), o => SelectedStudent != null);
         }
 
-        private void AddStudent()
+        private async void UcitajStudente()
         {
-            var noviStudent = new Student
+            try
             {
-                StudentID = Students.Count > 0 ? Students.Max(s => s.StudentID) + 1 : 1,
-                Ime = Ime,
-                Prezime = Prezime,
-                BrojIndeksa = BrojIndeksa,
-                GodinaStudija = GodinaStudija
-            };
-
-            Students.Add(noviStudent);
-            ResetForm();
+                var studenti = await _studentService.ucitajSveStudente();
+                Students.Clear();
+                foreach (var student in studenti)
+                {
+                    Students.Add(student);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri učitavanju studenata: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
-        private void EditStudent()
+        private async void DodajStudenta()
         {
-            if (SelectedStudent != null)
+            try
             {
+                if (string.IsNullOrWhiteSpace(Ime) || string.IsNullOrWhiteSpace(Prezime) || string.IsNullOrWhiteSpace(BrojIndeksa))
+                {
+                    System.Windows.MessageBox.Show("Sva polja su obavezna.", "Validacija", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+
+                var noviStudent = new Student
+                {
+                    Ime = Ime,
+                    Prezime = Prezime,
+                    BrojIndeksa = BrojIndeksa,
+                    GodinaStudija = GodinaStudija
+                };
+
+                var dodaniStudent = await _studentService.DodajStudenta(noviStudent);
+                Students.Add(dodaniStudent);
+
+                System.Windows.MessageBox.Show($"Student {dodaniStudent.Ime} {dodaniStudent.Prezime} je uspešno dodan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                ResetForm();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri dodavanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private async void AzurirajStudenta()
+        {
+            try
+            {
+                if (SelectedStudent == null)
+                    return;
+
+                var azuriraniPodaci = new Student
+                {
+                    Ime = Ime,
+                    Prezime = Prezime,
+                    BrojIndeksa = BrojIndeksa,
+                    GodinaStudija = GodinaStudija
+                };
+
+                await _studentService.AzurirajStudenta(SelectedStudent.StudentID, azuriraniPodaci);
+
                 SelectedStudent.Ime = Ime;
                 SelectedStudent.Prezime = Prezime;
                 SelectedStudent.BrojIndeksa = BrojIndeksa;
                 SelectedStudent.GodinaStudija = GodinaStudija;
+
+                System.Windows.MessageBox.Show("Student je uspešno ažuriran.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                ResetForm();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri ažuriranju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
-        private void DeleteStudent()
+        private async void ObrisiStudenta()
         {
-            if (SelectedStudent != null)
+            try
             {
+                if (SelectedStudent == null)
+                    return;
+
+                var rezultat = System.Windows.MessageBox.Show(
+                    $"Sigurno želite da obrišete studenta {SelectedStudent.Ime} {SelectedStudent.Prezime}?",
+                    "Potvrda brisanja",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Question);
+
+                if (rezultat != System.Windows.MessageBoxResult.Yes)
+                    return;
+
+                await _studentService.ObrisiStudenta(SelectedStudent.StudentID);
                 Students.Remove(SelectedStudent);
+
+                System.Windows.MessageBox.Show("Student je uspešno obrisan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 ResetForm();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri brisanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 

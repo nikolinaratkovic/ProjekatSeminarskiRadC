@@ -19,9 +19,26 @@ namespace Projekat.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+             
+                optionsBuilder.UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;");
+            }
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Student>().ToTable("student");
+            modelBuilder.Entity<Predmet>().ToTable("predmet");
+            modelBuilder.Entity<Ispit>().ToTable("ispit");
+
+            modelBuilder.Entity<Predmet>()
+                .Property(p => p.Semestar)
+                .HasColumnName("semester");
 
             modelBuilder.Entity<Ispit>()
                 .HasOne(i => i.Student)

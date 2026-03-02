@@ -1,9 +1,12 @@
-﻿using Projekat.Models;
+﻿using Projekat.Data;
+using Projekat.Models;
+using Projekat.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
+using Microsoft.EntityFrameworkCore;
 
 namespace Projekat.ViewModels
 {
@@ -15,6 +18,8 @@ namespace Projekat.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             CommandManager.InvalidateRequerySuggested();
         }
+
+        private readonly PredmetService _predmetService;
 
         public ObservableCollection<Predmet> Predmets { get; set; } = new ObservableCollection<Predmet>();
 
@@ -76,47 +81,122 @@ namespace Projekat.ViewModels
 
         public PredmetViewModel()
         {
-            // Test podaci
-            Predmets.Add(new Predmet { PredmetID = 1, Naziv = "Programiranje 1", ESPB = 7, Semestar = 4 });
-            Predmets.Add(new Predmet { PredmetID = 2, Naziv = "Programiranje 2", ESPB = 8, Semestar = 5 });
+            
+            var context = new ApplicationDbContext(
+                new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<ApplicationDbContext>()
+                    .UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;")
+                    .Options
+            );
+            _predmetService = new PredmetService(context);
 
-            AddCommand = new RelayCommand(o => AddPredmet(), o => CanSave());
-            EditCommand = new RelayCommand(o => EditPredmet(), o => SelectedPredmet != null && CanSave());
-            DeleteCommand = new RelayCommand(o => DeletePredmet(), o => SelectedPredmet != null);
+            UcitajPredmete();
+
+            AddCommand = new RelayCommand(o => DodajPredmet(), o => CanSave());
+            EditCommand = new RelayCommand(o => AzurirajPredmet(), o => SelectedPredmet != null && CanSave());
+            DeleteCommand = new RelayCommand(o => ObrisiPredmet(), o => SelectedPredmet != null);
         }
 
-        private void AddPredmet()
+        private async void UcitajPredmete()
         {
-            var noviPredmet = new Predmet
+            try
             {
-                PredmetID = Predmets.Count > 0 ? Predmets.Max(p => p.PredmetID) + 1 : 1,
-                Naziv = Naziv,
-                ESPB = ESPB,
-                Semestar = Semestar
-            };
-
-            Predmets.Add(noviPredmet);
-            ClearForm();
+                var predmeti = await _predmetService.ucitajSvePredmete();
+                Predmets.Clear();
+                foreach (var predmet in predmeti)
+                {
+                    Predmets.Add(predmet);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri učitavanju predmeta: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
-        private void EditPredmet()
+        private async void DodajPredmet()
         {
-            if (SelectedPredmet == null) return;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(Naziv) || ESPB == 0 || Semestar == 0)
+                {
+                    System.Windows.MessageBox.Show("Sva polja su obavezna.", "Validacija", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
 
-            SelectedPredmet.Naziv = Naziv;
-            SelectedPredmet.ESPB = ESPB;
-            SelectedPredmet.Semestar = Semestar;
+                var noviPredmet = new Predmet
+                {
+                    Naziv = Naziv,
+                    ESPB = ESPB,
+                    Semestar = Semestar
+                };
 
-            // NEMA više OnPropertyChanged(nameof(Predmets));
-            // jer model sada ima INotifyPropertyChanged
+                var dodaniPredmet = await _predmetService.dodajPredmet(noviPredmet);
+                Predmets.Add(dodaniPredmet);
+
+                System.Windows.MessageBox.Show($"Predmet {dodaniPredmet.Naziv} je uspešno dodan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                ClearForm();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri dodavanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
-        private void DeletePredmet()
+        private async void AzurirajPredmet()
         {
-            if (SelectedPredmet == null) return;
+            try
+            {
+                if (SelectedPredmet == null)
+                    return;
 
-            Predmets.Remove(SelectedPredmet);
-            ClearForm();
+                var azuriraniPodaci = new Predmet
+                {
+                    Naziv = Naziv,
+                    ESPB = ESPB,
+                    Semestar = Semestar
+                };
+
+                await _predmetService.azurirajPredmet(SelectedPredmet.PredmetID, azuriraniPodaci);
+
+                SelectedPredmet.Naziv = Naziv;
+                SelectedPredmet.ESPB = ESPB;
+                SelectedPredmet.Semestar = Semestar;
+
+                System.Windows.MessageBox.Show("Predmet je uspešno ažuriran.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                ClearForm();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri ažuriranju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private async void ObrisiPredmet()
+        {
+            try
+            {
+                if (SelectedPredmet == null)
+                    return;
+
+                var rezultat = System.Windows.MessageBox.Show(
+                    $"Sigurno želite da obrišete predmet {SelectedPredmet.Naziv}?",
+                    "Potvrda brisanja",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Question);
+
+                if (rezultat != System.Windows.MessageBoxResult.Yes)
+                    return;
+
+                await _predmetService.obrisiPredmet(SelectedPredmet.PredmetID);
+                Predmets.Remove(SelectedPredmet);
+
+                System.Windows.MessageBox.Show("Predmet je uspešno obrisan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                ClearForm();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Greška pri brisanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private void ClearForm()
