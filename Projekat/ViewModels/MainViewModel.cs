@@ -1,4 +1,7 @@
-﻿using System.Windows.Input;
+﻿using Projekat.Data;
+using Projekat.Services;
+using System.Windows.Input;
+using Microsoft.EntityFrameworkCore;
 
 namespace Projekat.ViewModels
 {
@@ -18,14 +21,30 @@ namespace Projekat.ViewModels
         public ICommand ShowStudentsCommand { get; }
         public ICommand ShowPredmetiCommand { get; }
         public ICommand ShowIspitiCommand { get; }
+        public ICommand ShowStatistikaCommand { get; }
+
+        private readonly IspitService _ispitService;
+        private readonly PredmetService _predmetService;
+        private readonly StudentService _studentService;
 
         public MainViewModel()
         {
-            CurrentViewModel = new StudentViewModel(); // default view
+           var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;")
+                .Options;
+
+            var context = new ApplicationDbContext(options);
+
+            _ispitService = new IspitService(context);
+            _predmetService = new PredmetService(context);
+            _studentService = new StudentService(context);
+
+            CurrentViewModel = new StudentViewModel();
 
             ShowStudentsCommand = new RelayCommand(_ => CurrentViewModel = new StudentViewModel());
             ShowPredmetiCommand = new RelayCommand(_ => CurrentViewModel = new PredmetViewModel());
             ShowIspitiCommand = new RelayCommand(_ => CurrentViewModel = new IspitViewModel());
+            ShowStatistikaCommand = new RelayCommand(_ => CurrentViewModel = new StatistikaViewModel(_ispitService, _predmetService, _studentService));
         }
     }
 }

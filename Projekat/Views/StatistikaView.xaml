@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="Projekat.Views.StatistikaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:scottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"
+             Height="700" Width="900">
+
+    <Grid Background="#D6EAF8" Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Statistika akademskog uspeha"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Foreground="#1B4F72"
+                   Margin="0,0,0,15"/>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Bar chart -->
+            <scottPlot:WpfPlot Name="BarChart" Grid.Column="0" Margin="0,0,10,0"/>
+
+            <!-- Line chart -->
+            <scottPlot:WpfPlot Name="LineChart" Grid.Column="1" Margin="0,0,10,0"/>
+
+            <!-- Pie chart -->
+            <scottPlot:WpfPlot Name="PieChart" Grid.Column="2" Margin="0"/>
+        </Grid>
+    </Grid>
+</UserControl>

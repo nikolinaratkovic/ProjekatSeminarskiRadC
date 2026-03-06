@@ -22,6 +22,10 @@
         <DataTemplate DataType="{x:Type vm:IspitViewModel}">
             <views:IspitView/>
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:StatistikaViewModel}">
+            <views:StatistikaView/>
+        </DataTemplate>
     </Window.Resources>
 
     <DockPanel>
@@ -67,6 +71,18 @@
                     </Button.Template>
                 </Button>
 
+                <Button Content="Statistika" Margin="0,0,10,0"
+                        Command="{Binding ShowStatistikaCommand}"
+                        Background="#85C1E9" Foreground="White" FontWeight="Bold"
+                        BorderThickness="0" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
             </StackPanel>
         </Border>
 
