@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Projekat.DTOs;
 
 namespace Projekat.Services
 {
@@ -273,5 +274,85 @@ namespace Projekat.Services
                 throw new Exception($"Greška pri brojanju ispita po ispitnim rokovima: {ex.Message}", ex);
             }
         }
+    
+
+    public async Task<List<SemestarStatistikaDTO>> getTrendUspehaBySemestar(int studentID)
+        {
+            try
+            {
+                return await _context.Ispiti
+                    .Where(i => i.StudentID == studentID && i.Ocena >= 6)
+                    .Include(i => i.Predmet)
+                    .GroupBy(i => i.Predmet.Semestar)
+                    .Select(g => new SemestarStatistikaDTO
+                    {
+                        Semester = g.Key,
+                        ProsecnaOcena = g.Average(i => i.Ocena)
+                    })
+                    .OrderBy(s => s.Semester)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Greška pri učitavanju trenda uspeha: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<PeriodStatistikaDTO>> getUporedniPrikaz(
+            int studentID,
+            DateTime od1, DateTime do1,
+            DateTime od2, DateTime do2)
+        {
+            try
+            {
+                var prosek1 = await _context.Ispiti
+                    .Where(i => i.StudentID == studentID
+                            && i.Ocena >= 6
+                            && i.DatumPolaganja >= od1
+                            && i.DatumPolaganja <= do1)
+                    .AverageAsync(i => (double?)i.Ocena) ?? 0;
+
+                var prosek2 = await _context.Ispiti
+                    .Where(i => i.StudentID == studentID
+                            && i.Ocena >= 6
+                            && i.DatumPolaganja >= od2
+                            && i.DatumPolaganja <= do2)
+                    .AverageAsync(i => (double?)i.Ocena) ?? 0;
+
+                return new List<PeriodStatistikaDTO>
+        {
+            new PeriodStatistikaDTO { Oznaka = $"{od1:MM/yyyy} - {do1:MM/yyyy}", ProsecnaOcena = prosek1 },
+            new PeriodStatistikaDTO { Oznaka = $"{od2:MM/yyyy} - {do2:MM/yyyy}", ProsecnaOcena = prosek2 }
+        };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Greška pri učitavanju uporednog prikaza: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<VremeStatistikaDTO>> getKretanjeProsecneOcene(int studentID)
+        {
+            try
+            {
+                return await _context.Ispiti
+                    .Where(i => i.StudentID == studentID && i.Ocena >= 6)
+                    .GroupBy(i => new { i.DatumPolaganja.Year, i.DatumPolaganja.Month })
+                    .Select(g => new VremeStatistikaDTO
+                    {
+                        Godina = g.Key.Year,
+                        Mesec = g.Key.Month,
+                        ProsecnaOcena = g.Average(i => i.Ocena)
+                    })
+                    .OrderBy(v => v.Godina)
+                    .ThenBy(v => v.Mesec)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Greška pri učitavanju kretanja prosečne ocene: {ex.Message}", ex);
+            }
+        }
     }
-}
+
+    }
