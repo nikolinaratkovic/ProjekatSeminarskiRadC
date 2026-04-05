@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+Ôªøusing Microsoft.EntityFrameworkCore;
 using Projekat.Data;
 using Projekat.Models;
 using System;
@@ -17,33 +17,35 @@ namespace Projekat.Services
             _context = context;
         }
 
-          public async Task<List<Predmet>> ucitajSvePredmete()
+        public async Task<List<Predmet>> UcitajSvePredmete()
         {
             try
             {
-                return await _context.Predmeti.AsNoTracking().ToListAsync();
+                return await _context.Predmeti
+                    .AsNoTracking()
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
-                throw new Exception($"Greöka pri u?itavanju predmeta: {ex.Message}", ex);
+                throw new Exception($"Gre≈°ka pri uƒçitavanju predmeta: {ex.Message}", ex);
             }
         }
 
-        public async Task<Predmet> prondjPredmetPoID(int predmetID)
+        public async Task<Predmet> PronadjiPredmetPoId(int predmetId)
         {
             try
             {
                 return await _context.Predmeti
                     .Include(p => p.Ispiti)
-                    .FirstOrDefaultAsync(p => p.PredmetID == predmetID);
+                    .FirstOrDefaultAsync(p => p.PredmetID == predmetId);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Greöka pri pronalaûenju predmeta: {ex.Message}", ex);
+                throw new Exception($"Gre≈°ka pri pronala≈æenju predmeta: {ex.Message}", ex);
             }
         }
 
-        public async Task<Predmet> dodajPredmet(Predmet predmet)
+        public async Task<Predmet> DodajPredmet(Predmet predmet)
         {
             try
             {
@@ -51,45 +53,41 @@ namespace Projekat.Services
                     throw new ArgumentNullException(nameof(predmet));
 
                 var postojeciPredmet = await _context.Predmeti
-                    .FirstOrDefaultAsync(p => p.Naziv == predmet.Naziv);
+                    .FirstOrDefaultAsync(p => p.Naziv.ToLower() == predmet.Naziv.ToLower());
 
                 if (postojeciPredmet != null)
-                    throw new InvalidOperationException($"Predmet sa nazivom '{predmet.Naziv}' ve? postoji.");
+                    throw new InvalidOperationException($"Predmet sa nazivom '{predmet.Naziv}' veƒá postoji.");
 
                 _context.Predmeti.Add(predmet);
                 await _context.SaveChangesAsync();
 
                 return predmet;
             }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception($"Greöka pri dodavanju predmeta u bazu: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
-                throw new Exception($"Greöka pri dodavanju predmeta: {ex.Message}", ex);
+                throw new Exception($"Gre≈°ka pri dodavanju predmeta: {ex.Message}", ex);
             }
         }
 
-        public async Task<Predmet> azurirajPredmet(int predmetID, Predmet noviPodaci)
+        public async Task<Predmet> AzurirajPredmet(int predmetId, Predmet noviPodaci)
         {
             try
             {
                 if (noviPodaci == null)
                     throw new ArgumentNullException(nameof(noviPodaci));
 
-                var predmet = await _context.Predmeti.FindAsync(predmetID);
+                var predmet = await _context.Predmeti.FindAsync(predmetId);
 
                 if (predmet == null)
-                    throw new InvalidOperationException($"Predmet sa ID-om {predmetID} nije prona?en.");
+                    throw new InvalidOperationException($"Predmet sa ID-om {predmetId} nije pronaƒëen.");
 
-                if (predmet.Naziv != noviPodaci.Naziv)
+                if (predmet.Naziv.ToLower() != noviPodaci.Naziv.ToLower())
                 {
                     var postojeciPredmet = await _context.Predmeti
-                        .FirstOrDefaultAsync(p => p.Naziv == noviPodaci.Naziv);
+                        .FirstOrDefaultAsync(p => p.Naziv.ToLower() == noviPodaci.Naziv.ToLower());
 
                     if (postojeciPredmet != null)
-                        throw new InvalidOperationException($"Predmet sa nazivom '{noviPodaci.Naziv}' ve? postoji.");
+                        throw new InvalidOperationException($"Predmet sa nazivom '{noviPodaci.Naziv}' veƒá postoji.");
                 }
 
                 predmet.Naziv = noviPodaci.Naziv;
@@ -101,42 +99,31 @@ namespace Projekat.Services
 
                 return predmet;
             }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception($"Greöka pri aûuriranju predmeta: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
-                throw new Exception($"Greöka pri aûuriranju predmeta: {ex.Message}", ex);
+                throw new Exception($"Gre≈°ka pri a≈æuriranju predmeta: {ex.Message}", ex);
             }
         }
 
-        public async Task obrisiPredmet(int predmetID)
+        public async Task ObrisiPredmet(int predmetId)
         {
             try
             {
                 var predmet = await _context.Predmeti
                     .Include(p => p.Ispiti)
-                    .FirstOrDefaultAsync(p => p.PredmetID == predmetID);
+                    .FirstOrDefaultAsync(p => p.PredmetID == predmetId);
 
                 if (predmet == null)
-                    throw new InvalidOperationException($"Predmet sa ID-om {predmetID} nije prona?en.");
+                    throw new InvalidOperationException($"Predmet sa ID-om {predmetId} nije pronaƒëen.");
 
-                if (predmet.Ispiti.Any())
-                {
-                    _context.Ispiti.RemoveRange(predmet.Ispiti);
-                }
+                _context.Ispiti.RemoveRange(predmet.Ispiti);
 
                 _context.Predmeti.Remove(predmet);
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception($"Greöka pri brisanju predmeta: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
-                throw new Exception($"Greöka pri brisanju predmeta: {ex.Message}", ex);
+                throw new Exception($"Gre≈°ka pri brisanju predmeta: {ex.Message}", ex);
             }
         }
     }

@@ -30,7 +30,7 @@ namespace Projekat.ViewModels
         public MainViewModel()
         {
            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;")
+                .UseSqlServer(Config.ConnectionString)
                 .Options;
 
             var context = new ApplicationDbContext(options);

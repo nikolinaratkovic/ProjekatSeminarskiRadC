@@ -2,22 +2,25 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Projekat"
+             xmlns:vm="clr-namespace:Projekat.ViewModels"
+             xmlns:views="clr-namespace:Projekat.Views"
              StartupUri="MainWindow.xaml">
+
     <Application.Resources>
-        <!--<DataTemplate DataType="{x:Type vm:StudentsViewModel}">
-            <views:StudentsView/>
+        <DataTemplate DataType="{x:Type vm:StudentViewModel}">
+            <views:StudentView/>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:PredmetiViewModel}">
-            <views:PredmetiView/>
+        <DataTemplate DataType="{x:Type vm:PredmetViewModel}">
+            <views:PredmetView/>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:IspitiViewModel}">
-            <views:IspitiView/>
+        <DataTemplate DataType="{x:Type vm:IspitViewModel}">
+            <views:IspitView/>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:StatistikaViewModel}">
             <views:StatistikaView/>
-        </DataTemplate>-->
+        </DataTemplate>
     </Application.Resources>
 </Application>

@@ -13,15 +13,13 @@ namespace Projekat.ViewModels
     public class PredmetViewModel : BaseViewModel, INotifyPropertyChanged, IDataErrorInfo
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        private void OnPropertyChanged(string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            CommandManager.InvalidateRequerySuggested();
-        }
 
         private readonly PredmetService _predmetService;
 
         public ObservableCollection<Predmet> Predmets { get; set; } = new ObservableCollection<Predmet>();
+
+        public ObservableCollection<int> ESPBOptions { get; } = new ObservableCollection<int>(Enumerable.Range(1, 30));
+        public ObservableCollection<int> SemestarOptions { get; } = new ObservableCollection<int>(Enumerable.Range(1, 10));
 
         private Predmet _selectedPredmet;
         public Predmet SelectedPredmet
@@ -29,16 +27,20 @@ namespace Projekat.ViewModels
             get => _selectedPredmet;
             set
             {
-                _selectedPredmet = value;
-
-                if (value != null)
+                if (_selectedPredmet != value)
                 {
-                    Naziv = value.Naziv;
-                    ESPB = value.ESPB;
-                    Semestar = value.Semestar;
-                }
+                    _selectedPredmet = value;
 
-                OnPropertyChanged(nameof(SelectedPredmet));
+                    if (value != null)
+                    {
+                        Naziv = value.Naziv;
+                        ESPB = value.ESPB;
+                        Semestar = value.Semestar;
+                    }
+
+                    OnPropertyChanged(nameof(SelectedPredmet));
+                    CommandManager.InvalidateRequerySuggested();
+                }
             }
         }
 
@@ -50,28 +52,31 @@ namespace Projekat.ViewModels
             {
                 _naziv = value;
                 OnPropertyChanged(nameof(Naziv));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
-        private int _espb;
-        public int ESPB
+        private int? _espb;
+        public int? ESPB
         {
             get => _espb;
             set
             {
                 _espb = value;
                 OnPropertyChanged(nameof(ESPB));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
-        private int _semestar;
-        public int Semestar
+        private int? _semestar;
+        public int? Semestar
         {
             get => _semestar;
             set
             {
                 _semestar = value;
                 OnPropertyChanged(nameof(Semestar));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -81,137 +86,144 @@ namespace Projekat.ViewModels
 
         public PredmetViewModel()
         {
-            
             var context = new ApplicationDbContext(
-                new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<ApplicationDbContext>()
-                    .UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;")
+                new DbContextOptionsBuilder<ApplicationDbContext>()
+                    .UseSqlServer(Config.ConnectionString)
                     .Options
             );
+
             _predmetService = new PredmetService(context);
 
-            UcitajPredmete();
+            UcitajPredmeteAsync();
 
-            AddCommand = new RelayCommand(o => DodajPredmet(), o => CanSave());
-            EditCommand = new RelayCommand(o => AzurirajPredmet(), o => SelectedPredmet != null && CanSave());
-            DeleteCommand = new RelayCommand(o => ObrisiPredmet(), o => SelectedPredmet != null);
+            AddCommand = new RelayCommand(o => DodajPredmetAsync(), o => CanSave());
+            EditCommand = new RelayCommand(o => AzurirajPredmetAsync(), o => SelectedPredmet != null && CanSave());
+            DeleteCommand = new RelayCommand(o => ObrisiPredmetAsync(), o => SelectedPredmet != null);
         }
 
-        private async void UcitajPredmete()
+        private async void UcitajPredmeteAsync()
         {
             try
             {
-                var predmeti = await _predmetService.ucitajSvePredmete();
+                var predmeti = await _predmetService.UcitajSvePredmete();
                 Predmets.Clear();
+
                 foreach (var predmet in predmeti)
-                {
                     Predmets.Add(predmet);
-                }
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri učitavanju predmeta: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri učitavanju: {ex.Message}", "Greška");
             }
         }
 
-        private async void DodajPredmet()
+        private async void DodajPredmetAsync()
         {
+            ValidateAllProperties();
+
+            if (!CanSave())
+            {
+                System.Windows.MessageBox.Show("Popunite sva polja ispravno.", "Validacija");
+                return;
+            }
+
             try
             {
-                if (string.IsNullOrWhiteSpace(Naziv) || ESPB == 0 || Semestar == 0)
-                {
-                    System.Windows.MessageBox.Show("Sva polja su obavezna.", "Validacija", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    return;
-                }
-
                 var noviPredmet = new Predmet
                 {
                     Naziv = Naziv,
-                    ESPB = ESPB,
-                    Semestar = Semestar
+                    ESPB = ESPB.Value,
+                    Semestar = Semestar.Value
                 };
 
-                var dodaniPredmet = await _predmetService.dodajPredmet(noviPredmet);
-                Predmets.Add(dodaniPredmet);
+                var dodani = await _predmetService.DodajPredmet(noviPredmet);
+                Predmets.Add(dodani);
 
-                System.Windows.MessageBox.Show($"Predmet {dodaniPredmet.Naziv} je uspešno dodan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                ClearForm();
+                System.Windows.MessageBox.Show($"Predmet {dodani.Naziv} uspešno dodat.", "Uspeh");
+                ResetForm();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri dodavanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri dodavanju: {ex.Message}", "Greška");
             }
         }
 
-        private async void AzurirajPredmet()
+        private async void AzurirajPredmetAsync()
         {
+            if (SelectedPredmet == null) return;
+
+            ValidateAllProperties();
+
+            if (!CanSave())
+            {
+                System.Windows.MessageBox.Show("Popunite sva polja ispravno.", "Validacija");
+                return;
+            }
+
             try
             {
-                if (SelectedPredmet == null)
-                    return;
-
-                var azuriraniPodaci = new Predmet
+                var noviPodaci = new Predmet
                 {
                     Naziv = Naziv,
-                    ESPB = ESPB,
-                    Semestar = Semestar
+                    ESPB = ESPB.Value,
+                    Semestar = Semestar.Value
                 };
 
-                await _predmetService.azurirajPredmet(SelectedPredmet.PredmetID, azuriraniPodaci);
+                await _predmetService.AzurirajPredmet(SelectedPredmet.PredmetID, noviPodaci);
 
                 SelectedPredmet.Naziv = Naziv;
-                SelectedPredmet.ESPB = ESPB;
-                SelectedPredmet.Semestar = Semestar;
+                SelectedPredmet.ESPB = ESPB.Value;
+                SelectedPredmet.Semestar = Semestar.Value;
 
-                System.Windows.MessageBox.Show("Predmet je uspešno ažuriran.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                ClearForm();
+                System.Windows.MessageBox.Show("Predmet uspešno ažuriran.", "Uspeh");
+                ResetForm();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri ažuriranju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri ažuriranju: {ex.Message}", "Greška");
             }
         }
 
-        private async void ObrisiPredmet()
+        private async void ObrisiPredmetAsync()
         {
+            if (SelectedPredmet == null) return;
+
+            var rezultat = System.Windows.MessageBox.Show(
+                $"Da li želite da obrišete predmet {SelectedPredmet.Naziv}?",
+                "Potvrda",
+                System.Windows.MessageBoxButton.YesNo);
+
+            if (rezultat != System.Windows.MessageBoxResult.Yes) return;
+
             try
             {
-                if (SelectedPredmet == null)
-                    return;
-
-                var rezultat = System.Windows.MessageBox.Show(
-                    $"Sigurno želite da obrišete predmet {SelectedPredmet.Naziv}?",
-                    "Potvrda brisanja",
-                    System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Question);
-
-                if (rezultat != System.Windows.MessageBoxResult.Yes)
-                    return;
-
-                await _predmetService.obrisiPredmet(SelectedPredmet.PredmetID);
+                await _predmetService.ObrisiPredmet(SelectedPredmet.PredmetID);
                 Predmets.Remove(SelectedPredmet);
 
-                System.Windows.MessageBox.Show("Predmet je uspešno obrisan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                ClearForm();
+                System.Windows.MessageBox.Show("Predmet uspešno obrisan.", "Uspeh");
+                ResetForm();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri brisanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri brisanju: {ex.Message}", "Greška");
             }
         }
 
-        private void ClearForm()
+        private void ResetForm()
         {
             SelectedPredmet = null;
             Naziv = string.Empty;
-            ESPB = 0;
-            Semestar = 0;
+            ESPB = null;
+            Semestar = null;
+
+            ValidateAllProperties();
         }
 
         private bool CanSave()
         {
-            return string.IsNullOrWhiteSpace(this[nameof(Naziv)]) &&
-                   string.IsNullOrWhiteSpace(this[nameof(ESPB)]) &&
-                   string.IsNullOrWhiteSpace(this[nameof(Semestar)]);
+            return this[nameof(Naziv)] == null &&
+                   this[nameof(ESPB)] == null &&
+                   this[nameof(Semestar)] == null;
         }
 
         public string Error => null;
@@ -226,22 +238,38 @@ namespace Projekat.ViewModels
                         if (string.IsNullOrWhiteSpace(Naziv))
                             return "Naziv je obavezan.";
                         if (Naziv.Length > 100)
-                            return "Naziv ne sme biti duži od 100 karaktera.";
+                            return "Max 100 karaktera.";
                         break;
 
                     case nameof(ESPB):
+                        if (ESPB == null)
+                            return "ESPB je obavezan.";
                         if (ESPB < 1 || ESPB > 30)
-                            return "ESPB mora biti između 1 i 30.";
+                            return "1-30.";
                         break;
 
                     case nameof(Semestar):
+                        if (Semestar == null)
+                            return "Semestar je obavezan.";
                         if (Semestar < 1 || Semestar > 10)
-                            return "Semestar mora biti između 1 i 10.";
+                            return "1-10.";
                         break;
                 }
 
                 return null;
             }
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void ValidateAllProperties()
+        {
+            OnPropertyChanged(nameof(Naziv));
+            OnPropertyChanged(nameof(ESPB));
+            OnPropertyChanged(nameof(Semestar));
         }
     }
 }

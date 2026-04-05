@@ -1,8 +1,8 @@
 ﻿using Projekat.Services;
-using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace Projekat.ViewModels
 {
@@ -25,39 +25,63 @@ namespace Projekat.ViewModels
             _ispitService = ispitService;
             _predmetService = predmetService;
             _studentService = studentService;
-
-            Task.Run(async () => await UcitajStatistikuAsync());
         }
 
-        private async Task UcitajStatistikuAsync()
+        public async Task UcitajStatistikuAsync()
         {
             try
             {
-                var predmeti = await _predmetService.ucitajSvePredmete();
+                var predmeti = await _predmetService.UcitajSvePredmete();
+                var naziviPredmeta = new ObservableCollection<string>();
+                var prosecneOcene = new ObservableCollection<double>();
+
                 foreach (var predmet in predmeti)
                 {
-                    double prosek = await _ispitService.izracunajProsecnuOcenuPredmeta(predmet.PredmetID);
-                    ProsecneOcenePredmeta.Add(prosek);
-                    NaziviPredmeta.Add(predmet.Naziv);
+                    double prosek = await _ispitService.IzracunajProsecnuOcenuPredmeta(predmet.PredmetID);
+                    naziviPredmeta.Add(predmet.Naziv);
+                    prosecneOcene.Add(prosek);
                 }
 
-                var studenti = await _studentService.ucitajSveStudente();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    NaziviPredmeta.Clear();
+                    ProsecneOcenePredmeta.Clear();
+
+                    foreach (var n in naziviPredmeta)
+                        NaziviPredmeta.Add(n);
+                    foreach (var p in prosecneOcene)
+                        ProsecneOcenePredmeta.Add(p);
+                });
+
+                var studenti = await _studentService.UcitajSveStudenteAsync();
+                var trend = new ObservableCollection<double>();
                 foreach (var student in studenti)
                 {
-                    double prosekStudenta = await _ispitService.izracunajProsecnuOcenuStudenta(student.StudentID);
-                    TrendStudenta.Add(prosekStudenta);
+                    double prosekStudenta = await _ispitService.IzracunajProsecnuOcenuStudenta(student.StudentID);
+                    trend.Add(prosekStudenta);
                 }
-
-                var poRokovima = await _ispitService.brojIspitaPoIspitimRokovimaSviStudenti();
-                foreach (var item in poRokovima)
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    IspitniRokovi.Add(item.Key);
-                    BrojIspitaPoRokovima.Add(item.Value);
-                }
+                    TrendStudenta.Clear();
+                    foreach (var t in trend)
+                        TrendStudenta.Add(t);
+                });
+
+                var poRokovima = await _ispitService.BrojIspitaPoIspitimRokovimaSviStudenti();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    IspitniRokovi.Clear();
+                    BrojIspitaPoRokovima.Clear();
+                    foreach (var item in poRokovima)
+                    {
+                        IspitniRokovi.Add(item.Key);
+                        BrojIspitaPoRokovima.Add(item.Value);
+                    }
+                });
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                Console.WriteLine($"Greška pri učitavanju statistike: {ex.Message}");
+                MessageBox.Show($"Greška pri učitavanju statistike: {ex.Message}");
             }
         }
     }

@@ -4,7 +4,6 @@ using Projekat.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Projekat.Services
@@ -18,7 +17,7 @@ namespace Projekat.Services
             _context = context;
         }
 
-        public async Task<List<Ispit>> ucitajSveIspite()
+        public async Task<List<Ispit>> UcitajSveIspite()
         {
             try
             {
@@ -34,14 +33,14 @@ namespace Projekat.Services
             }
         }
 
-        public async Task<Ispit> pronadjIspitPoID(int ispitID)
+        public async Task<Ispit> PronadjiIspitPoId(int ispitId)
         {
             try
             {
                 return await _context.Ispiti
                     .Include(i => i.Student)
                     .Include(i => i.Predmet)
-                    .FirstOrDefaultAsync(i => i.IspitID == ispitID);
+                    .FirstOrDefaultAsync(i => i.IspitID == ispitId);
             }
             catch (Exception ex)
             {
@@ -49,7 +48,7 @@ namespace Projekat.Services
             }
         }
 
-        public async Task<Ispit> dodajIspit(Ispit ispit)
+        public async Task<Ispit> DodajIspit(Ispit ispit)
         {
             try
             {
@@ -69,27 +68,22 @@ namespace Projekat.Services
 
                 return ispit;
             }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception($"Greška pri dodavanju ispita u bazu: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
                 throw new Exception($"Greška pri dodavanju ispita: {ex.Message}", ex);
             }
         }
 
-        public async Task<Ispit> azurirajIspit(int ispitID, Ispit noviPodaci)
+        public async Task<Ispit> AzurirajIspit(int ispitId, Ispit noviPodaci)
         {
             try
             {
                 if (noviPodaci == null)
                     throw new ArgumentNullException(nameof(noviPodaci));
 
-                var ispit = await _context.Ispiti.FindAsync(ispitID);
-
+                var ispit = await _context.Ispiti.FindAsync(ispitId);
                 if (ispit == null)
-                    throw new InvalidOperationException($"Ispit sa ID-om {ispitID} nije pronađen.");
+                    throw new InvalidOperationException($"Ispit sa ID-om {ispitId} nije pronađen.");
 
                 var studentPostoji = await _context.Students.AnyAsync(s => s.StudentID == noviPodaci.StudentID);
                 if (!studentPostoji)
@@ -110,168 +104,57 @@ namespace Projekat.Services
 
                 return ispit;
             }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception($"Greška pri ažuriranju ispita: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
                 throw new Exception($"Greška pri ažuriranju ispita: {ex.Message}", ex);
             }
         }
 
-        public async Task obrisiIspit(int ispitID)
+        public async Task ObrisiIspit(int ispitId)
         {
             try
             {
-                var ispit = await _context.Ispiti.FindAsync(ispitID);
-
+                var ispit = await _context.Ispiti.FindAsync(ispitId);
                 if (ispit == null)
-                    throw new InvalidOperationException($"Ispit sa ID-om {ispitID} nije pronađen.");
+                    throw new InvalidOperationException($"Ispit sa ID-om {ispitId} nije pronađen.");
 
                 _context.Ispiti.Remove(ispit);
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException ex)
-            {
-                throw new Exception($"Greška pri brisanju ispita: {ex.Message}", ex);
-            }
             catch (Exception ex)
             {
                 throw new Exception($"Greška pri brisanju ispita: {ex.Message}", ex);
             }
         }
 
-        public async Task<int> brojPolozenihIspitaStudenta(int studentID)
+        public async Task<double> IzracunajProsecnuOcenuPredmeta(int predmetId)
         {
-            try
-            {
-                return await _context.Ispiti
-                    .Where(i => i.StudentID == studentID && i.Ocena >= 6)
-                    .CountAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Greška pri brojanju položenih ispita: {ex.Message}", ex);
-            }
+            var ocene = await _context.Ispiti
+                .Where(i => i.PredmetID == predmetId)
+                .Select(i => (double)i.Ocena)
+                .ToListAsync();
+
+            return ocene.Count == 0 ? 0 : Math.Round(ocene.Average(), 2);
         }
 
-        public async Task<int> brojNepolozenihIspitaStudenta(int studentID)
+        public async Task<double> IzracunajProsecnuOcenuStudenta(int studentId)
         {
-            try
-            {
-                return await _context.Ispiti
-                    .Where(i => i.StudentID == studentID && i.Ocena < 6)
-                    .CountAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Greška pri brojanju nepoloženih ispita: {ex.Message}", ex);
-            }
+            var ocene = await _context.Ispiti
+                .Where(i => i.StudentID == studentId)
+                .Select(i => (double)i.Ocena)
+                .ToListAsync();
+
+            return ocene.Count == 0 ? 0 : Math.Round(ocene.Average(), 2);
         }
 
-        public async Task<double> procenatPolozenihIspitaStudenta(int studentID)
+        public async Task<Dictionary<string, int>> BrojIspitaPoIspitimRokovimaSviStudenti()
         {
-            try
-            {
-                var ukupno = await _context.Ispiti
-                    .Where(i => i.StudentID == studentID)
-                    .CountAsync();
+            var lista = await _context.Ispiti
+                .GroupBy(i => i.IspitniRok)
+                .Select(g => new { Rok = g.Key, Broj = g.Count() })
+                .ToListAsync();
 
-                if (ukupno == 0)
-                    return 0;
-
-                var polozeni = await _context.Ispiti
-                    .Where(i => i.StudentID == studentID && i.Ocena >= 6)
-                    .CountAsync();
-
-                return (double)polozeni / ukupno * 100;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Greška pri izračunavanju procenta položenih ispita: {ex.Message}", ex);
-            }
-        }
-
-        public async Task<double> procenatNepolozenihIspitaStudenta(int studentID)
-        {
-            try
-            {
-                var ukupno = await _context.Ispiti
-                    .Where(i => i.StudentID == studentID)
-                    .CountAsync();
-
-                if (ukupno == 0)
-                    return 0;
-
-                var nepolozeni = await _context.Ispiti
-                    .Where(i => i.StudentID == studentID && i.Ocena < 6)
-                    .CountAsync();
-
-                return (double)nepolozeni / ukupno * 100;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Greška pri izračunavanju procenta nepoloženih ispita: {ex.Message}", ex);
-            }
-        }
-
-        public async Task<double> izracunajProsecnuOcenuPredmeta(int predmetID)
-        {
-            try
-            {
-                var ocene = await _context.Ispiti
-                    .Where(i => i.PredmetID == predmetID)
-                    .Select(i => i.Ocena)
-                    .ToListAsync();
-
-                if (ocene.Count == 0)
-                    return 0;
-
-                return ocene.Average();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Greška pri izračunavanju prosečne ocene za predmet: {ex.Message}", ex);
-            }
-        }
-
-        public async Task<double> izracunajProsecnuOcenuStudenta(int studentID)
-        {
-            try
-            {
-                var ocene = await _context.Ispiti
-                    .Where(i => i.StudentID == studentID)
-                    .Select(i => i.Ocena)
-                    .ToListAsync();
-
-                if (ocene.Count == 0)
-                    return 0;
-
-                return ocene.Average();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Greška pri izračunavanju prosečne ocene za studenta: {ex.Message}", ex);
-            }
-        }
-
-        public async Task<Dictionary<string, int>> brojIspitaPoIspitimRokovimaSviStudenti()
-        {
-            try
-            {
-                var result = await _context.Ispiti
-                    .GroupBy(i => i.IspitniRok)
-                    .Select(g => new { IspitniRok = g.Key, Broj = g.Count() })
-                    .AsNoTracking()
-                    .ToListAsync();
-
-                return result.ToDictionary(x => x.IspitniRok, x => x.Broj);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Greška pri brojanju ispita po ispitnim rokovima: {ex.Message}", ex);
-            }
+            return lista.ToDictionary(x => x.Rok, x => x.Broj);
         }
     }
 }

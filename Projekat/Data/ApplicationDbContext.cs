@@ -23,8 +23,14 @@ namespace Projekat.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-             
-                optionsBuilder.UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;");
+                optionsBuilder.UseSqlServer(
+                    Config.ConnectionString,
+                    sqlOptions => sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                        errorNumbersToAdd: null
+                    )
+                );
             }
         }
 

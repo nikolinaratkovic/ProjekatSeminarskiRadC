@@ -1,6 +1,7 @@
 ﻿using Projekat.ViewModels;
 using ScottPlot;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Projekat.Views
@@ -11,19 +12,33 @@ namespace Projekat.Views
         {
             InitializeComponent();
 
-            BarChart.Loaded += BarChart_Loaded;
-            LineChart.Loaded += LineChart_Loaded;
-            PieChart.Loaded += PieChart_Loaded;
+            if (DataContext is StatistikaViewModel vm)
+            {
+                vm.ProsecneOcenePredmeta.CollectionChanged += (s, e) => RefreshBarChart();
+                vm.NaziviPredmeta.CollectionChanged += (s, e) => RefreshBarChart();
+                vm.TrendStudenta.CollectionChanged += (s, e) => RefreshLineChart();
+                vm.BrojIspitaPoRokovima.CollectionChanged += (s, e) => RefreshPieChart();
+                vm.IspitniRokovi.CollectionChanged += (s, e) => RefreshPieChart();
+            }
         }
 
-        private void BarChart_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is Projekat.ViewModels.StatistikaViewModel vm)
+            {
+                await vm.UcitajStatistikuAsync();
+            }
+        }
+
+        private void RefreshBarChart()
         {
             if (DataContext is StatistikaViewModel vm && vm.ProsecneOcenePredmeta.Any())
             {
                 var plt = BarChart.Plot;
+                plt.Clear();
 
-                double[] values = vm.ProsecneOcenePredmeta.ToArray();
-                string[] labels = vm.NaziviPredmeta.ToArray();
+                var values = vm.ProsecneOcenePredmeta.ToArray();
+                var labels = vm.NaziviPredmeta.ToArray();
 
                 var bar = plt.AddBar(values);
                 bar.FillColor = System.Drawing.Color.CornflowerBlue;
@@ -37,14 +52,15 @@ namespace Projekat.Views
             }
         }
 
-        private void LineChart_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        private void RefreshLineChart()
         {
             if (DataContext is StatistikaViewModel vm && vm.TrendStudenta.Any())
             {
                 var plt = LineChart.Plot;
+                plt.Clear();
 
-                double[] xs = Enumerable.Range(1, vm.TrendStudenta.Count).Select(i => (double)i).ToArray();
-                double[] ys = vm.TrendStudenta.ToArray();
+                var xs = Enumerable.Range(1, vm.TrendStudenta.Count).Select(i => (double)i).ToArray();
+                var ys = vm.TrendStudenta.ToArray();
 
                 var scatter = plt.AddScatter(xs, ys);
                 scatter.LineWidth = 2;
@@ -59,14 +75,15 @@ namespace Projekat.Views
             }
         }
 
-        private void PieChart_Loaded(object sender, System.Windows.RoutedEventArgs e)
+        private void RefreshPieChart()
         {
             if (DataContext is StatistikaViewModel vm && vm.BrojIspitaPoRokovima.Any())
             {
                 var plt = PieChart.Plot;
+                plt.Clear();
 
-                double[] values = vm.BrojIspitaPoRokovima.Select(v => (double)v).ToArray();
-                string[] labels = vm.IspitniRokovi.ToArray();
+                var values = vm.BrojIspitaPoRokovima.Select(v => (double)v).ToArray();
+                var labels = vm.IspitniRokovi.ToArray();
 
                 var pie = plt.AddPie(values);
                 pie.SliceLabels = labels;

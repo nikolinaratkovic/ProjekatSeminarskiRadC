@@ -67,5 +67,7 @@ namespace Projekat.Models
         }
 
         public ICollection<Ispit> Ispiti { get; set; } = new List<Ispit>();
+
+        public string FullDisplay => $"{Ime} {Prezime} ({BrojIndeksa})";
     }
 }

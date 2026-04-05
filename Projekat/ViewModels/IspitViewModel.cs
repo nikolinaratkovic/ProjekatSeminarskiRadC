@@ -13,11 +13,6 @@ namespace Projekat.ViewModels
     public class IspitViewModel : BaseViewModel, INotifyPropertyChanged, IDataErrorInfo
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        private void OnPropertyChanged(string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            CommandManager.InvalidateRequerySuggested();
-        }
 
         private readonly IspitService _ispitService;
         private readonly StudentService _studentService;
@@ -43,6 +38,7 @@ namespace Projekat.ViewModels
                     IspitniRok = value.IspitniRok;
                 }
                 OnPropertyChanged(nameof(SelectedIspit));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -50,66 +46,75 @@ namespace Projekat.ViewModels
         public Student SelectedStudent
         {
             get => _selectedStudent;
-            set
-            {
-                _selectedStudent = value;
-                OnPropertyChanged(nameof(SelectedStudent));
-            }
+            set { _selectedStudent = value; OnPropertyChanged(nameof(SelectedStudent)); CommandManager.InvalidateRequerySuggested(); }
         }
 
         private Predmet _selectedPredmet;
         public Predmet SelectedPredmet
         {
             get => _selectedPredmet;
-            set
-            {
-                _selectedPredmet = value;
-                OnPropertyChanged(nameof(SelectedPredmet));
-            }
+            set { _selectedPredmet = value; OnPropertyChanged(nameof(SelectedPredmet)); CommandManager.InvalidateRequerySuggested(); }
         }
 
         private int _ocena = 6;
         public int Ocena
         {
             get => _ocena;
-            set
-            {
-                _ocena = value;
-                OnPropertyChanged(nameof(Ocena));
-            }
+            set { _ocena = value; OnPropertyChanged(nameof(Ocena)); CommandManager.InvalidateRequerySuggested(); }
         }
 
         private DateTime _datumPolaganja = DateTime.Today;
         public DateTime DatumPolaganja
         {
             get => _datumPolaganja;
-            set
-            {
-                _datumPolaganja = value;
-                OnPropertyChanged(nameof(DatumPolaganja));
-            }
+            set { _datumPolaganja = value; OnPropertyChanged(nameof(DatumPolaganja)); CommandManager.InvalidateRequerySuggested(); }
         }
 
         private string _ispitniRok = string.Empty;
         public string IspitniRok
         {
             get => _ispitniRok;
-            set
-            {
-                _ispitniRok = value;
-                OnPropertyChanged(nameof(IspitniRok));
-            }
+            set { _ispitniRok = value; OnPropertyChanged(nameof(IspitniRok)); CommandManager.InvalidateRequerySuggested(); }
         }
 
         public ICommand AddCommand { get; }
         public ICommand EditCommand { get; }
         public ICommand DeleteCommand { get; }
 
+        public string Error => null;
+        public string this[string columnName]
+        {
+            get
+            {
+                switch (columnName)
+                {
+                    case nameof(SelectedStudent):
+                        if (SelectedStudent == null) return "Student je obavezan.";
+                        break;
+                    case nameof(SelectedPredmet):
+                        if (SelectedPredmet == null) return "Predmet je obavezan.";
+                        break;
+                    case nameof(Ocena):
+                        if (Ocena < 5 || Ocena > 10) return "Ocena mora biti između 5 i 10.";
+                        break;
+                    case nameof(IspitniRok):
+                        if (string.IsNullOrWhiteSpace(IspitniRok)) return "Ispitni rok je obavezan.";
+                        if (IspitniRok.Length > 50) return "Maksimalno 50 karaktera.";
+                        break;
+                    case nameof(DatumPolaganja):
+                        if (DatumPolaganja == default) return "Datum polaganja je obavezan.";
+                        if (DatumPolaganja > DateTime.Today) return "Datum polaganja ne može biti u budućnosti.";
+                        break;
+                }
+                return null;
+            }
+        }
+
         public IspitViewModel()
         {
             var context = new ApplicationDbContext(
-                new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<ApplicationDbContext>()
-                    .UseSqlServer("Server=Kecman03pc\\SQLEXPRESS;Database=StudentPerformanceDB;Trusted_Connection=True;TrustServerCertificate=True;")
+                new DbContextOptionsBuilder<ApplicationDbContext>()
+                    .UseSqlServer(Config.ConnectionString)
                     .Options
             );
 
@@ -117,54 +122,49 @@ namespace Projekat.ViewModels
             _studentService = new StudentService(context);
             _predmetService = new PredmetService(context);
 
-            UcitajPodatke();
+            UcitajPodatkeAsync();
 
-            AddCommand = new RelayCommand(o => DodajIspit(), o => CanSave());
-            EditCommand = new RelayCommand(o => AzurirajIspit(), o => SelectedIspit != null && CanSave());
-            DeleteCommand = new RelayCommand(o => ObrisiIspit(), o => SelectedIspit != null);
+            AddCommand = new RelayCommand(o => DodajIspitAsync(), o => CanSave());
+            EditCommand = new RelayCommand(o => AzurirajIspitAsync(), o => SelectedIspit != null && CanSave());
+            DeleteCommand = new RelayCommand(o => ObrisiIspitAsync(), o => SelectedIspit != null);
         }
-        private async void UcitajPodatke()
+
+        private async void UcitajPodatkeAsync()
         {
             try
             {
-                var studenti = await _studentService.ucitajSveStudente();
                 Students.Clear();
-                foreach (var student in studenti)
-                {
-                    Students.Add(student);
-                }
+                foreach (var s in await _studentService.UcitajSveStudenteAsync())
+                    Students.Add(s);
 
-                var predmeti = await _predmetService.ucitajSvePredmete();
                 Predmets.Clear();
-                foreach (var predmet in predmeti)
-                {
-                    Predmets.Add(predmet);
-                }
+                foreach (var p in await _predmetService.UcitajSvePredmete())
+                    Predmets.Add(p);
 
-                var ispiti = await _ispitService.ucitajSveIspite();
                 Ispiti.Clear();
-                foreach (var ispit in ispiti)
-                {
-                    Ispiti.Add(ispit);
-                }
+                foreach (var i in await _ispitService.UcitajSveIspite())
+                    Ispiti.Add(i);
+
+                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri učitavanju podataka: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri učitavanju podataka: {ex.Message}", "Greška");
             }
         }
 
-        private async void DodajIspit()
+        private async void DodajIspitAsync()
         {
+            ValidateAllProperties();
+            if (!CanSave())
+            {
+                System.Windows.MessageBox.Show("Popunite sva polja ispravno.", "Validacija");
+                return;
+            }
+
             try
             {
-                if (!CanSave())
-                {
-                    System.Windows.MessageBox.Show("Molimo popunite sva polja ispravno.", "Validacija", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    return;
-                }
-
-                var noviIspit = new Ispit
+                var novi = new Ispit
                 {
                     StudentID = SelectedStudent.StudentID,
                     PredmetID = SelectedPredmet.PredmetID,
@@ -173,26 +173,32 @@ namespace Projekat.ViewModels
                     IspitniRok = IspitniRok
                 };
 
-                var dodaniIspit = await _ispitService.dodajIspit(noviIspit);
-                Ispiti.Add(dodaniIspit);
+                var dodani = await _ispitService.DodajIspit(novi);
+                Ispiti.Add(dodani);
 
-                System.Windows.MessageBox.Show($"Ispit je uspešno dodan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("Ispit uspešno dodat.", "Uspeh");
                 ResetForm();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri dodavanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri dodavanju: {ex.Message}", "Greška");
             }
         }
 
-        private async void AzurirajIspit()
+        private async void AzurirajIspitAsync()
         {
+            if (SelectedIspit == null) return;
+
+            ValidateAllProperties();
+            if (!CanSave())
+            {
+                System.Windows.MessageBox.Show("Popunite sva polja ispravno.", "Validacija");
+                return;
+            }
+
             try
             {
-                if (SelectedIspit == null || !CanSave())
-                    return;
-
-                var azuriraniPodaci = new Ispit
+                var noviPodaci = new Ispit
                 {
                     StudentID = SelectedStudent.StudentID,
                     PredmetID = SelectedPredmet.PredmetID,
@@ -201,7 +207,7 @@ namespace Projekat.ViewModels
                     IspitniRok = IspitniRok
                 };
 
-                await _ispitService.azurirajIspit(SelectedIspit.IspitID, azuriraniPodaci);
+                await _ispitService.AzurirajIspit(SelectedIspit.IspitID, noviPodaci);
 
                 SelectedIspit.StudentID = SelectedStudent.StudentID;
                 SelectedIspit.PredmetID = SelectedPredmet.PredmetID;
@@ -209,40 +215,35 @@ namespace Projekat.ViewModels
                 SelectedIspit.DatumPolaganja = DatumPolaganja;
                 SelectedIspit.IspitniRok = IspitniRok;
 
-                System.Windows.MessageBox.Show("Ispit je uspešno ažuriran.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("Ispit uspešno ažuriran.", "Uspeh");
                 ResetForm();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri ažuriranju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri ažuriranju: {ex.Message}", "Greška");
             }
         }
 
-        private async void ObrisiIspit()
+        private async void ObrisiIspitAsync()
         {
+            if (SelectedIspit == null) return;
+
+            var rezultat = System.Windows.MessageBox.Show(
+                $"Da li želite da obrišete ispit?",
+                "Potvrda", System.Windows.MessageBoxButton.YesNo);
+
+            if (rezultat != System.Windows.MessageBoxResult.Yes) return;
+
             try
             {
-                if (SelectedIspit == null)
-                    return;
-
-                var rezultat = System.Windows.MessageBox.Show(
-                    $"Sigurno želite da obrišete ispit?",
-                    "Potvrda brisanja",
-                    System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Question);
-
-                if (rezultat != System.Windows.MessageBoxResult.Yes)
-                    return;
-
-                await _ispitService.obrisiIspit(SelectedIspit.IspitID);
+                await _ispitService.ObrisiIspit(SelectedIspit.IspitID);
                 Ispiti.Remove(SelectedIspit);
-
-                System.Windows.MessageBox.Show("Ispit je uspešno obrisan.", "Uspešno", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("Ispit uspešno obrisan.", "Uspeh");
                 ResetForm();
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Greška pri brisanju: {ex.Message}", "Greška", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Greška pri brisanju: {ex.Message}", "Greška");
             }
         }
 
@@ -254,38 +255,31 @@ namespace Projekat.ViewModels
             Ocena = 6;
             DatumPolaganja = DateTime.Today;
             IspitniRok = string.Empty;
+
+            ValidateAllProperties();
         }
 
         private bool CanSave()
         {
-            return SelectedStudent != null &&
-                   SelectedPredmet != null &&
-                   !string.IsNullOrWhiteSpace(IspitniRok) &&
-                   Ocena >= 5 && Ocena <= 10;
+            return this[nameof(SelectedStudent)] == null &&
+                   this[nameof(SelectedPredmet)] == null &&
+                   this[nameof(Ocena)] == null &&
+                   this[nameof(IspitniRok)] == null &&
+                   this[nameof(DatumPolaganja)] == null;
         }
 
-        public string Error => null;
-
-        public string this[string columnName]
+        private void OnPropertyChanged(string propertyName)
         {
-            get
-            {
-                switch (columnName)
-                {
-                    case nameof(Ocena):
-                        if (Ocena < 5 || Ocena > 10)
-                            return "Ocena mora biti između 5 i 10.";
-                        break;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
-                    case nameof(IspitniRok):
-                        if (string.IsNullOrWhiteSpace(IspitniRok))
-                            return "Ispitni rok je obavezan.";
-                        if (IspitniRok.Length > 50)
-                            return "Ispitni rok ne sme biti duži od 50 karaktera.";
-                        break;
-                }
-                return null;
-            }
+        private void ValidateAllProperties()
+        {
+            OnPropertyChanged(nameof(SelectedStudent));
+            OnPropertyChanged(nameof(SelectedPredmet));
+            OnPropertyChanged(nameof(Ocena));
+            OnPropertyChanged(nameof(IspitniRok));
+            OnPropertyChanged(nameof(DatumPolaganja));
         }
     }
 }

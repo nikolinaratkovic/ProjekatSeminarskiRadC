@@ -10,24 +10,6 @@
         <vm:MainViewModel/>
     </Window.DataContext>
 
-    <Window.Resources>
-        <DataTemplate DataType="{x:Type vm:StudentViewModel}">
-            <views:StudentView/>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:PredmetViewModel}">
-            <views:PredmetView/>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:IspitViewModel}">
-            <views:IspitView/>
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type vm:StatistikaViewModel}">
-            <views:StatistikaView/>
-        </DataTemplate>
-    </Window.Resources>
-
     <DockPanel>
         <Border DockPanel.Dock="Top" Background="#5DADE2" Height="60" Padding="10">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
