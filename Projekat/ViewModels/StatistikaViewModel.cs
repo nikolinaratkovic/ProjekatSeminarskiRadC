@@ -1,6 +1,5 @@
 ﻿using Projekat.Services;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -14,13 +13,18 @@ namespace Projekat.ViewModels
 
         public ObservableCollection<string> NaziviPredmeta { get; set; } = new();
         public ObservableCollection<double> ProsecneOcenePredmeta { get; set; } = new();
-
         public ObservableCollection<string> IspitniRokovi { get; set; } = new();
         public ObservableCollection<int> BrojIspitaPoRokovima { get; set; } = new();
 
         public ObservableCollection<double> TrendStudenta { get; set; } = new();
 
-        public StatistikaViewModel(IspitService ispitService, PredmetService predmetService, StudentService studentService)
+        public ObservableCollection<int> Ocene { get; set; } = new();
+        public ObservableCollection<int> BrojOcena { get; set; } = new();
+
+        public StatistikaViewModel(
+            IspitService ispitService,
+            PredmetService predmetService,
+            StudentService studentService)
         {
             _ispitService = ispitService;
             _predmetService = predmetService;
@@ -32,14 +36,17 @@ namespace Projekat.ViewModels
             try
             {
                 var predmeti = await _predmetService.UcitajSvePredmete();
-                var naziviPredmeta = new ObservableCollection<string>();
-                var prosecneOcene = new ObservableCollection<double>();
+
+                var nazivi = new ObservableCollection<string>();
+                var proseci = new ObservableCollection<double>();
 
                 foreach (var predmet in predmeti)
                 {
-                    double prosek = await _ispitService.IzracunajProsecnuOcenuPredmeta(predmet.PredmetID);
-                    naziviPredmeta.Add(predmet.Naziv);
-                    prosecneOcene.Add(prosek);
+                    double prosek = await _ispitService
+                        .IzracunajProsecnuOcenuPredmeta(predmet.PredmetID);
+
+                    nazivi.Add(predmet.Naziv);
+                    proseci.Add(prosek);
                 }
 
                 Application.Current.Dispatcher.Invoke(() =>
@@ -47,35 +54,57 @@ namespace Projekat.ViewModels
                     NaziviPredmeta.Clear();
                     ProsecneOcenePredmeta.Clear();
 
-                    foreach (var n in naziviPredmeta)
+                    foreach (var n in nazivi)
                         NaziviPredmeta.Add(n);
-                    foreach (var p in prosecneOcene)
+
+                    foreach (var p in proseci)
                         ProsecneOcenePredmeta.Add(p);
                 });
 
                 var studenti = await _studentService.UcitajSveStudenteAsync();
                 var trend = new ObservableCollection<double>();
+
                 foreach (var student in studenti)
                 {
-                    double prosekStudenta = await _ispitService.IzracunajProsecnuOcenuStudenta(student.StudentID);
-                    trend.Add(prosekStudenta);
+                    double prosek = await _ispitService
+                        .IzracunajProsecnuOcenuStudenta(student.StudentID);
+
+                    trend.Add(prosek);
                 }
+
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     TrendStudenta.Clear();
+
                     foreach (var t in trend)
                         TrendStudenta.Add(t);
                 });
 
                 var poRokovima = await _ispitService.BrojIspitaPoIspitimRokovimaSviStudenti();
+
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     IspitniRokovi.Clear();
                     BrojIspitaPoRokovima.Clear();
+
                     foreach (var item in poRokovima)
                     {
                         IspitniRokovi.Add(item.Key);
                         BrojIspitaPoRokovima.Add(item.Value);
+                    }
+                });
+
+                var distribucija = await _ispitService.BrojOcenaDistribucija();
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Ocene.Clear();
+                    BrojOcena.Clear();
+
+                    foreach (var item in distribucija)
+                    {
+                        Ocene.Add(item.Key);
+                        BrojOcena.Add(item.Value);
                     }
                 });
             }

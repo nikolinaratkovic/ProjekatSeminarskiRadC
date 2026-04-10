@@ -7,20 +7,17 @@
              d:DesignHeight="700" d:DesignWidth="900">
 
     <UserControl.Resources>
-        <!-- Boje -->
         <SolidColorBrush x:Key="PrimaryBlue" Color="#5DADE2"/>
         <SolidColorBrush x:Key="LightBlue" Color="#D6EAF8"/>
         <SolidColorBrush x:Key="ButtonBlue" Color="#85C1E9"/>
         <SolidColorBrush x:Key="DarkBlueText" Color="#1B4F72"/>
 
-        <!-- TextBlock stil -->
         <Style TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="Foreground" Value="{StaticResource DarkBlueText}"/>
             <Setter Property="Margin" Value="0,5"/>
         </Style>
 
-        <!-- ComboBox stil -->
         <Style TargetType="ComboBox">
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Margin" Value="0,5"/>
@@ -28,7 +25,6 @@
             <Setter Property="Background" Value="White"/>
         </Style>
 
-        <!-- TextBox stil sa validacijom -->
         <Style TargetType="TextBox" x:Key="ValidatedTextBox" BasedOn="{StaticResource {x:Type TextBox}}">
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="True">
@@ -37,8 +33,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-
-        <!-- Button stil -->
+        
         <Style TargetType="Button">
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="Width" Value="120"/>
@@ -68,14 +63,12 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Naslov -->
         <TextBlock Text="Evidencija ispita"
                    FontSize="24"
                    FontWeight="Bold"
                    Margin="0,0,0,15"
                    Foreground="{StaticResource DarkBlueText}"/>
 
-        <!-- DataGrid -->
         <DataGrid Grid.Row="1"
                   ItemsSource="{Binding Ispiti}"
                   SelectedItem="{Binding SelectedIspit}"
@@ -86,16 +79,18 @@
                   FontSize="15"
                   RowBackground="#EBF5FB"
                   AlternatingRowBackground="#D6EAF8"
-                  Margin="0,0,0,15">
+                  Margin="0,0,0,15"
+                  ColumnWidth="*">
+
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Student" Binding="{Binding Student.FullDisplay}" />
                 <DataGridTextColumn Header="Predmet" Binding="{Binding Predmet.Naziv}" />
                 <DataGridTextColumn Header="Ocena" Binding="{Binding Ocena}" />
                 <DataGridTextColumn Header="Datum" Binding="{Binding DatumPolaganja, StringFormat=d}" />
+                <DataGridTextColumn Header="Ispitni rok" Binding="{Binding IspitniRok}" />
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- Forma za unos / edit -->
         <Grid Grid.Row="2" Margin="0,0,0,15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="150"/>
@@ -107,38 +102,41 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Student -->
-            <TextBlock Text="Student:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+            <TextBlock Text="Student:" Grid.Row="0" Grid.Column="0"/>
             <ComboBox Grid.Row="0" Grid.Column="1"
                       ItemsSource="{Binding Students}"
                       SelectedItem="{Binding SelectedStudent}"
                       DisplayMemberPath="FullDisplay"/>
 
-            <!-- Predmet -->
-            <TextBlock Text="Predmet:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+            <TextBlock Text="Predmet:" Grid.Row="1" Grid.Column="0"/>
             <ComboBox Grid.Row="1" Grid.Column="1"
                       ItemsSource="{Binding Predmets}"
                       SelectedItem="{Binding SelectedPredmet}"
                       DisplayMemberPath="Naziv"/>
 
-            <!-- Ocena -->
-            <TextBlock Text="Ocena:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-            <TextBox Text="{Binding Ocena, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" 
-                     Grid.Row="2" Grid.Column="1"
+            <TextBlock Text="Ocena:" Grid.Row="2" Grid.Column="0"/>
+            <TextBox Grid.Row="2" Grid.Column="1"
+                     Text="{Binding Ocena, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
                      Style="{StaticResource ValidatedTextBox}"/>
 
-            <!-- Datum polaganja -->
-            <TextBlock Text="Datum polaganja:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
-            <DatePicker SelectedDate="{Binding DatumPolaganja}" Grid.Row="3" Grid.Column="1"/>
+            <TextBlock Text="Datum polaganja:" Grid.Row="3" Grid.Column="0"/>
+            <DatePicker Grid.Row="3" Grid.Column="1"
+                        SelectedDate="{Binding DatumPolaganja}"/>
+
+            <TextBlock Text="Ispitni rok:" Grid.Row="4" Grid.Column="0"/>
+            <ComboBox Grid.Row="4" Grid.Column="1"
+                      ItemsSource="{Binding IspitniRokoviLista}"
+                      SelectedItem="{Binding IspitniRok}"/>
         </Grid>
 
-        <!-- Dugmad -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Add" Command="{Binding AddCommand}" />
             <Button Content="Edit" Command="{Binding EditCommand}" />
             <Button Content="Delete" Command="{Binding DeleteCommand}" />
         </StackPanel>
+
     </Grid>
 </UserControl>

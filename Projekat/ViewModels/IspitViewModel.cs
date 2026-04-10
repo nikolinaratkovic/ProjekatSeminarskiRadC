@@ -22,6 +22,14 @@ namespace Projekat.ViewModels
         public ObservableCollection<Student> Students { get; set; } = new ObservableCollection<Student>();
         public ObservableCollection<Predmet> Predmets { get; set; } = new ObservableCollection<Predmet>();
 
+        public ObservableCollection<string> IspitniRokoviLista { get; set; } = new()
+        {
+            "Januar 2023", "Jun 2023", "Jul 2023", "Septembar 2023", "Oktobar 2023",
+            "Januar 2024", "Jun 2024", "Jul 2024", "Septembar 2024", "Oktobar 2024",
+            "Januar 2025", "Jun 2025", "Jul 2025", "Septembar 2025", "Oktobar 2025",
+            "Januar 2026", "Jun 2026", "Jul 2026", "Septembar 2026", "Oktobar 2026"
+        };
+
         private Ispit _selectedIspit;
         public Ispit SelectedIspit
         {

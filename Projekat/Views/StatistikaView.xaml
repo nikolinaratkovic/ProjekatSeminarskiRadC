@@ -5,28 +5,71 @@
              Height="700" Width="900"
              Loaded="UserControl_Loaded">
 
-    <Grid Background="#D6EAF8" Margin="20">
+    <UserControl.Resources>
+
+        <SolidColorBrush x:Key="LightBlue" Color="#D6EAF8"/>
+        <SolidColorBrush x:Key="DarkBlue" Color="#1B4F72"/>
+
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.2"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="TitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource DarkBlue}"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource LightBlue}" Margin="20">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <TextBlock Text="Statistika akademskog uspeha"
-                   FontSize="24"
-                   FontWeight="Bold"
-                   Foreground="#1B4F72"
-                   Margin="0,0,0,15"/>
+                   Style="{StaticResource TitleStyle}"/>
 
         <Grid Grid.Row="1">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="1.2*"/>
+                <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
 
-            <scottPlot:WpfPlot Name="BarChart" Grid.Column="0" Margin="0,0,10,0"/>
-            <scottPlot:WpfPlot Name="LineChart" Grid.Column="1" Margin="0,0,10,0"/>
-            <scottPlot:WpfPlot Name="PieChart" Grid.Column="2" Margin="0"/>
+            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardStyle}">
+                <scottPlot:WpfPlot Name="BarChart"/>
+            </Border>
+
+            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardStyle}">
+                <scottPlot:WpfPlot Name="LineChart"/>
+            </Border>
+
+            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CardStyle}">
+                <scottPlot:WpfPlot Name="PieChart"/>
+            </Border>
+
+            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardStyle}">
+                <scottPlot:WpfPlot Name="DistributionChart"/>
+            </Border>
+
         </Grid>
+
     </Grid>
 </UserControl>

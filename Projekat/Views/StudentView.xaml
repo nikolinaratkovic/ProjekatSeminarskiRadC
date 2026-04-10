@@ -3,12 +3,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-    xmlns:local="clr-namespace:Projekat.Views"
     mc:Ignorable="d" 
     d:DesignHeight="700" d:DesignWidth="900">
 
     <UserControl.Resources>
-        <SolidColorBrush x:Key="PrimaryBlue" Color="#5DADE2"/>
+
         <SolidColorBrush x:Key="LightBlue" Color="#D6EAF8"/>
         <SolidColorBrush x:Key="ButtonBlue" Color="#85C1E9"/>
         <SolidColorBrush x:Key="DarkBlueText" Color="#1B4F72"/>
@@ -19,16 +18,8 @@
             <Setter Property="Margin" Value="0,5"/>
         </Style>
 
-        <Style TargetType="ComboBox" x:Key="ValidatedComboBox">
-            <Style.Triggers>
-                <Trigger Property="Validation.HasError" Value="True">
-                    <Setter Property="BorderBrush" Value="Red"/>
-                    <Setter Property="BorderThickness" Value="2"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="TextBox" x:Key="ValidatedTextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Style TargetType="TextBox" x:Key="ValidatedTextBox"
+               BasedOn="{StaticResource {x:Type TextBox}}">
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="True">
                     <Setter Property="BorderBrush" Value="Red"/>
@@ -49,22 +40,18 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="10">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
     </UserControl.Resources>
 
     <Grid Background="{StaticResource LightBlue}" Margin="20">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="0*"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="3*"/>
@@ -73,23 +60,22 @@
         </Grid.RowDefinitions>
 
         <TextBlock Text="Upravljanje studentima"
-            FontSize="24"
-            FontWeight="Bold"
-            Margin="0,0,0,15"
-            Foreground="{StaticResource DarkBlueText}" Grid.ColumnSpan="2"/>
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Margin="0,0,0,15"/>
 
         <DataGrid Grid.Row="1"
-            ItemsSource="{Binding Students}"
-            SelectedItem="{Binding SelectedStudent}"
-            AutoGenerateColumns="False"
-            IsReadOnly="True"
-            CanUserAddRows="False"
-            SelectionMode="Single"
-            Background="White"
-            FontSize="15"
-            RowBackground="#EBF5FB"
-            AlternatingRowBackground="#D6EAF8"
-            Margin="0,0,0,15" Grid.ColumnSpan="2">
+                  ItemsSource="{Binding Students}"
+                  SelectedItem="{Binding SelectedStudent}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  Background="White"
+                  FontSize="15"
+                  RowBackground="#EBF5FB"
+                  AlternatingRowBackground="#D6EAF8"
+                  ColumnWidth="*"
+                  Margin="0,0,0,15">
 
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Ime" Binding="{Binding Ime}" />
@@ -99,7 +85,8 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <Grid Grid.Row="2" Margin="0,0,0,15" Grid.ColumnSpan="2">
+        <Grid Grid.Row="2" Margin="0,0,0,15">
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="150"/>
                 <ColumnDefinition Width="*"/>
@@ -112,78 +99,33 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Ime:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-            <TextBox Text="{Binding Ime, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"
-                     Grid.Row="0" Grid.Column="1"
-                     Style="{StaticResource ValidatedTextBox}">
-                <TextBox.ToolTip>
-                    <Binding Path="(Validation.Errors)[0].ErrorContent" RelativeSource="{RelativeSource Self}"/>
-                </TextBox.ToolTip>
-            </TextBox>
+            <TextBlock Text="Ime:" Grid.Row="0" Grid.Column="0"/>
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding Ime, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource ValidatedTextBox}"/>
 
-            <TextBlock Text="Prezime:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
-            <TextBox Text="{Binding Prezime, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}" 
-                     Grid.Row="1" Grid.Column="1"
-                     Style="{StaticResource ValidatedTextBox}">
-                <TextBox.ToolTip>
-                    <Binding Path="(Validation.Errors)[0].ErrorContent" RelativeSource="{RelativeSource Self}"/>
-                </TextBox.ToolTip>
-            </TextBox>
+            <TextBlock Text="Prezime:" Grid.Row="1" Grid.Column="0"/>
+            <TextBox Grid.Row="1" Grid.Column="1"
+                     Text="{Binding Prezime, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource ValidatedTextBox}"/>
 
-            <TextBlock Text="Broj indeksa:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-            <TextBox Text="{Binding BrojIndeksa, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}" 
-                     Grid.Row="2" Grid.Column="1"
-                     Style="{StaticResource ValidatedTextBox}">
-                <TextBox.ToolTip>
-                    <Binding Path="(Validation.Errors)[0].ErrorContent" RelativeSource="{RelativeSource Self}"/>
-                </TextBox.ToolTip>
-            </TextBox>
+            <TextBlock Text="Broj indeksa:" Grid.Row="2" Grid.Column="0"/>
+            <TextBox Grid.Row="2" Grid.Column="1"
+                     Text="{Binding BrojIndeksa, UpdateSourceTrigger=PropertyChanged}"
+                     Style="{StaticResource ValidatedTextBox}"/>
 
-            <TextBlock Text="Godina studija:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center"/>
+            <TextBlock Text="Godina studija:" Grid.Row="3" Grid.Column="0"/>
             <ComboBox Grid.Row="3" Grid.Column="1"
-                Style="{StaticResource ValidatedComboBox}"
-                ItemsSource="{Binding Godine}"
-                SelectedItem="{Binding GodinaStudija, 
-                        Mode=TwoWay,
-                        UpdateSourceTrigger=PropertyChanged,
-                        ValidatesOnDataErrors=True,
-                        NotifyOnValidationError=True}"
-                FontSize="16"
-                Padding="5"
-                Margin="0,5,0,5"
-                Background="White"
-                BorderBrush="{StaticResource PrimaryBlue}"
-                BorderThickness="1.5"
-                Foreground="{StaticResource DarkBlueText}"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Center"
-                MaxDropDownHeight="200"
-                MinWidth="200"
-                IsEditable="False"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding}" Padding="5"/>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-                <ComboBox.ToolTip>
-                    <Binding Path="(Validation.Errors)[0].ErrorContent" RelativeSource="{RelativeSource Self}"/>
-                </ComboBox.ToolTip>
-            </ComboBox>
+                      ItemsSource="{Binding Godine}"
+                      SelectedItem="{Binding GodinaStudija}"
+                      Background="White"/>
         </Grid>
 
-        <StackPanel Grid.Row="3"
-            Orientation="Horizontal"
-            HorizontalAlignment="Center" Grid.Column="1">
-
-            <Button Content="Add"
-                Command="{Binding AddCommand}"/>
-
-            <Button Content="Edit"
-                Command="{Binding EditCommand}"/>
-
-            <Button Content="Delete"
-                Command="{Binding DeleteCommand}"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Add" Command="{Binding AddCommand}"/>
+            <Button Content="Edit" Command="{Binding EditCommand}"/>
+            <Button Content="Delete" Command="{Binding DeleteCommand}"/>
         </StackPanel>
+
     </Grid>
 </UserControl>

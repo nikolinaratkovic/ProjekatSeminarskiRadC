@@ -11,89 +11,145 @@ namespace Projekat.Views
         public StatistikaView()
         {
             InitializeComponent();
-
-            if (DataContext is StatistikaViewModel vm)
-            {
-                vm.ProsecneOcenePredmeta.CollectionChanged += (s, e) => RefreshBarChart();
-                vm.NaziviPredmeta.CollectionChanged += (s, e) => RefreshBarChart();
-                vm.TrendStudenta.CollectionChanged += (s, e) => RefreshLineChart();
-                vm.BrojIspitaPoRokovima.CollectionChanged += (s, e) => RefreshPieChart();
-                vm.IspitniRokovi.CollectionChanged += (s, e) => RefreshPieChart();
-            }
+            Loaded += StatistikaView_Loaded;
         }
 
         private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            if (DataContext is Projekat.ViewModels.StatistikaViewModel vm)
+            if (DataContext is StatistikaViewModel vm)
             {
                 await vm.UcitajStatistikuAsync();
+
+                RefreshBarChart();
+                RefreshLineChart();
+                RefreshPieChart();
+                RefreshDistributionChart();
+            }
+        }
+
+        private void StatistikaView_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is StatistikaViewModel vm)
+            {
+                vm.ProsecneOcenePredmeta.CollectionChanged += (s, e) => RefreshBarChart();
+                vm.NaziviPredmeta.CollectionChanged += (s, e) => RefreshBarChart();
+
+                vm.TrendStudenta.CollectionChanged += (s, e) => RefreshLineChart();
+
+                vm.IspitniRokovi.CollectionChanged += (s, e) => RefreshPieChart();
+                vm.BrojIspitaPoRokovima.CollectionChanged += (s, e) => RefreshPieChart();
+
+                vm.Ocene.CollectionChanged += (s, e) => RefreshDistributionChart();
+                vm.BrojOcena.CollectionChanged += (s, e) => RefreshDistributionChart();
             }
         }
 
         private void RefreshBarChart()
         {
-            if (DataContext is StatistikaViewModel vm && vm.ProsecneOcenePredmeta.Any())
-            {
-                var plt = BarChart.Plot;
-                plt.Clear();
+            if (DataContext is not StatistikaViewModel vm)
+                return;
 
-                var values = vm.ProsecneOcenePredmeta.ToArray();
-                var labels = vm.NaziviPredmeta.ToArray();
+            if (!vm.ProsecneOcenePredmeta.Any() || !vm.NaziviPredmeta.Any())
+                return;
 
-                var bar = plt.AddBar(values);
-                bar.FillColor = System.Drawing.Color.CornflowerBlue;
-                bar.Label = "Prosečne ocene";
+            var plt = BarChart.Plot;
+            plt.Clear();
 
-                plt.XTicks(labels);
-                plt.Title("Prosečne ocene po predmetima");
-                plt.YLabel("Ocena");
+            var values = vm.ProsecneOcenePredmeta.ToArray();
 
-                BarChart.Refresh();
-            }
+            var labels = vm.NaziviPredmeta
+                .Select(n => n.Length > 10 ? n.Substring(0, 10) + "..." : n)
+                .ToArray();
+
+            var bar = plt.AddBar(values);
+            bar.FillColor = System.Drawing.Color.CornflowerBlue;
+
+            plt.XTicks(labels);
+            plt.XAxis.TickLabelStyle(rotation: 60);
+            plt.XAxis.TickLabelStyle(fontSize: 10);
+            plt.Layout(bottom: 120);
+
+            plt.Grid(enable: true);
+            plt.Title("Prosečne ocene po predmetima");
+            plt.YLabel("Ocena");
+
+            BarChart.Refresh();
         }
 
         private void RefreshLineChart()
         {
-            if (DataContext is StatistikaViewModel vm && vm.TrendStudenta.Any())
-            {
-                var plt = LineChart.Plot;
-                plt.Clear();
+            if (DataContext is not StatistikaViewModel vm)
+                return;
 
-                var xs = Enumerable.Range(1, vm.TrendStudenta.Count).Select(i => (double)i).ToArray();
-                var ys = vm.TrendStudenta.ToArray();
+            if (!vm.TrendStudenta.Any())
+                return;
 
-                var scatter = plt.AddScatter(xs, ys);
-                scatter.LineWidth = 2;
-                scatter.Color = System.Drawing.Color.Orange;
-                scatter.MarkerSize = 5;
+            var plt = LineChart.Plot;
+            plt.Clear();
 
-                plt.Title("Trend studenta");
-                plt.XLabel("Studenti");
-                plt.YLabel("Prosek ocena");
+            var xs = Enumerable.Range(0, vm.TrendStudenta.Count)
+                               .Select(i => (double)i)
+                               .ToArray();
 
-                LineChart.Refresh();
-            }
+            var ys = vm.TrendStudenta.ToArray();
+
+            var line = plt.AddScatter(xs, ys);
+            line.LineWidth = 2;
+            line.Color = System.Drawing.Color.Orange;
+            line.MarkerSize = 5;
+            plt.Grid(enable: true);
+            plt.Title("Trend studenata");
+            plt.YLabel("Prosek ocena");
+            LineChart.Refresh();
         }
 
         private void RefreshPieChart()
         {
-            if (DataContext is StatistikaViewModel vm && vm.BrojIspitaPoRokovima.Any())
-            {
-                var plt = PieChart.Plot;
-                plt.Clear();
+            if (DataContext is not StatistikaViewModel vm)
+                return;
 
-                var values = vm.BrojIspitaPoRokovima.Select(v => (double)v).ToArray();
-                var labels = vm.IspitniRokovi.ToArray();
+            if (vm.BrojIspitaPoRokovima.Count == 0 || vm.IspitniRokovi.Count == 0)
+                return;
 
-                var pie = plt.AddPie(values);
-                pie.SliceLabels = labels;
-                pie.ShowPercentages = true;
-                pie.Explode = true;
+            var plt = PieChart.Plot;
+            plt.Clear();
 
-                plt.Title("Broj ispita po ispitnim rokovima");
+            double[] values = vm.BrojIspitaPoRokovima.Select(x => (double)x).ToArray();
+            string[] labels = vm.IspitniRokovi.ToArray();
 
-                PieChart.Refresh();
-            }
+            if (values.Length == 0)
+                return;
+
+            var pie = plt.AddPie(values);
+            pie.SliceLabels = labels;
+            pie.ShowLabels = false;
+            pie.Explode = true;
+            plt.Title("Ispiti po rokovima");
+            plt.Legend(location: ScottPlot.Alignment.LowerRight);
+            plt.Layout(top: 60, right: 180);
+            PieChart.Refresh();
+        }
+
+        private void RefreshDistributionChart()
+        {
+            if (DataContext is not StatistikaViewModel vm)
+                return;
+
+            if (vm.Ocene.Count == 0 || vm.BrojOcena.Count == 0)
+                return;
+
+            var plt = DistributionChart.Plot;
+            plt.Clear();
+
+            var values = vm.BrojOcena.Select(x => (double)x).ToArray();
+            var labels = vm.Ocene.Select(x => x.ToString()).ToArray();
+
+            var bar = plt.AddBar(values);
+            bar.PositionOffset = 0;
+            plt.XTicks(labels);
+            plt.Title("Distribucija ocena");
+            plt.YLabel("Broj ispita");
+            DistributionChart.Refresh();
         }
     }
 }

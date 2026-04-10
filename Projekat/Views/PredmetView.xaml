@@ -7,6 +7,7 @@
     d:DesignHeight="700" d:DesignWidth="900">
 
     <UserControl.Resources>
+
         <SolidColorBrush x:Key="PrimaryBlue" Color="#5DADE2"/>
         <SolidColorBrush x:Key="LightBlue" Color="#D6EAF8"/>
         <SolidColorBrush x:Key="ButtonBlue" Color="#85C1E9"/>
@@ -22,9 +23,11 @@
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="Margin" Value="0,5"/>
             <Setter Property="Padding" Value="5"/>
+            <Setter Property="Background" Value="White"/>
         </Style>
 
-        <Style TargetType="TextBox" x:Key="ValidatedTextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Style TargetType="TextBox" x:Key="ValidatedTextBox"
+               BasedOn="{StaticResource {x:Type TextBox}}">
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="True">
                     <Setter Property="BorderBrush" Value="Red"/>
@@ -45,15 +48,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="10">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
     </UserControl.Resources>
 
     <Grid Background="{StaticResource LightBlue}" Margin="20">
@@ -65,22 +67,22 @@
         </Grid.RowDefinitions>
 
         <TextBlock Text="Upravljanje predmetima"
-            FontSize="24"
-            FontWeight="Bold"
-            Margin="0,0,0,15"
-            Foreground="{StaticResource DarkBlueText}"/>
+                   FontSize="24"
+                   FontWeight="Bold"
+                   Margin="0,0,0,15"/>
 
         <DataGrid Grid.Row="1"
-            ItemsSource="{Binding Predmets}"
-            SelectedItem="{Binding SelectedPredmet}"
-            AutoGenerateColumns="False"
-            IsReadOnly="True"
-            CanUserAddRows="False"
-            Background="White"
-            FontSize="15"
-            RowBackground="#EBF5FB"
-            AlternatingRowBackground="#D6EAF8"
-            Margin="0,0,0,15">
+                  ItemsSource="{Binding Predmets}"
+                  SelectedItem="{Binding SelectedPredmet}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  Background="White"
+                  FontSize="15"
+                  RowBackground="#EBF5FB"
+                  AlternatingRowBackground="#D6EAF8"
+                  ColumnWidth="*"
+                  Margin="0,0,0,15">
 
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Naziv" Binding="{Binding Naziv}" />
@@ -101,42 +103,27 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Naziv:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
-            <TextBox Text="{Binding Naziv, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"
-                     Grid.Row="0" Grid.Column="1"
+            <TextBlock Text="Naziv:" Grid.Row="0" Grid.Column="0"/>
+            <TextBox Grid.Row="0" Grid.Column="1"
+                     Text="{Binding Naziv, UpdateSourceTrigger=PropertyChanged}"
                      Style="{StaticResource ValidatedTextBox}"/>
 
-            <TextBlock Text="ESPB:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
-
+            <TextBlock Text="ESPB:" Grid.Row="1" Grid.Column="0"/>
             <ComboBox Grid.Row="1" Grid.Column="1"
-                ItemsSource="{Binding ESPBOptions}"
-                SelectedItem="{Binding ESPB, UpdateSourceTrigger=PropertyChanged}"
-                Background="White"
-                FontSize="15"
-                Margin="0,5"/>
+                      ItemsSource="{Binding ESPBOptions}"
+                      SelectedItem="{Binding ESPB}"/>
 
-            <TextBlock Text="Semestar:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
-
+            <TextBlock Text="Semestar:" Grid.Row="2" Grid.Column="0"/>
             <ComboBox Grid.Row="2" Grid.Column="1"
-                ItemsSource="{Binding SemestarOptions}"
-                SelectedItem="{Binding Semestar, UpdateSourceTrigger=PropertyChanged}"
-                Background="White"
-                FontSize="15"
-                Margin="0,5"/>
+                      ItemsSource="{Binding SemestarOptions}"
+                      SelectedItem="{Binding Semestar}"/>
         </Grid>
 
-        <StackPanel Grid.Row="3"
-            Orientation="Horizontal"
-            HorizontalAlignment="Right">
-
-            <Button Content="Add"
-                Command="{Binding AddCommand}"/>
-
-            <Button Content="Edit"
-                Command="{Binding EditCommand}"/>
-
-            <Button Content="Delete"
-            Command="{Binding DeleteCommand}"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Add" Command="{Binding AddCommand}"/>
+            <Button Content="Edit" Command="{Binding EditCommand}"/>
+            <Button Content="Delete" Command="{Binding DeleteCommand}"/>
         </StackPanel>
+
     </Grid>
 </UserControl>
